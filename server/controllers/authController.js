@@ -1,10 +1,29 @@
-//1. IMPORTACIONES
+// ./controllers/authController.js
+
+// 1. IMPORTACIONES
+
 const bcryptjs = require("bcryptjs")
 const jwt = require("jsonwebtoken")
+
 const User = require("./../models/User")
 
-//2. CONTROLLERS
+const { validationResult } = require("express-validator")
+
+// 2. CONTROLLERS
+
 exports.loginUser = async (req, res) => {
+
+    // VALIDACIÓN DE FORMULARIO
+    const errors = validationResult(req)
+
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            msgError: errors.array()
+        })
+    }
+
+    // OBTENER LOS DATOS DEL FORMULARIO
+
     const { email, password } = req.body
 
     try {
@@ -19,6 +38,7 @@ exports.loginUser = async (req, res) => {
         }
 
         // SI TODO MARAVILLOSO, CANTAMOS JUNTOS Y AVANZAMOS
+
         console.log("Usuario encontrado:", foundUser)
 
         // 2. VERIFICAR CONTRASEÑA
@@ -37,16 +57,18 @@ exports.loginUser = async (req, res) => {
             user: {
                 id: foundUser._id
             }
+
         }
 
         // B. FIRMA
         jwt.sign(
             payload,
-            "holamundo",        //process.env.SECRET,
+            process.env.SECRET,
             {
                 expiresIn: 360000
             },
             (error, token) => {
+
                 console.log(error)
 
                 if (error) {
@@ -61,17 +83,27 @@ exports.loginUser = async (req, res) => {
                         token
                     }
                 })
-            })
+
+
+            }
+        )
 
     } catch (error) {
+
         console.log(error)
+
         return res.status(500).json({
             msgError: "Hubo un problema creando el usuario."
         })
+
     }
+
+
 }
 
+
 exports.verifyingToken = async (req, res) => {
+
     try {
 
         const userData = await User.findById(req.user.id).select("-hashedPassword")
@@ -92,8 +124,5 @@ exports.verifyingToken = async (req, res) => {
         })
 
     }
-
-
-    res.send("verificando el token")
 
 }
